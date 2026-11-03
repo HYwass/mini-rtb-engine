@@ -1,0 +1,25 @@
+package com.rtb.entity;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Ad {
+
+    private Long id;
+    private Integer advertiserId;
+    private String title;
+    private String creativeUrl;
+    private String categoryCode;
+    private BigDecimal bid;
+    private BigDecimal dailyBudget;
+    private Integer status;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}

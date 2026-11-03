@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rtb.mapper.AdMapper">
+
+    <select id="selectById" resultType="com.rtb.entity.Ad">
+        SELECT
+        id,
+        advertiser_id,
+        title,
+        creative_url,
+        category_code,
+        bid,
+        daily_budget,
+        status,
+        created_at,
+        updated_at
+        FROM ad
+        WHERE id = #{id}
+    </select>
+
+</mapper>
