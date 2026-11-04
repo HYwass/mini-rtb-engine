@@ -20,4 +20,244 @@
         WHERE id = #{id}
     </select>
 
+    <insert id="insertAd"
+            parameterType="com.rtb.entity.Ad"
+            useGeneratedKeys="true"
+            keyProperty="id">
+
+        INSERT INTO ad (
+        advertiser_id,
+        title,
+        creative_url,
+        category_code,
+        bid,
+        daily_budget,
+        status
+        )
+        VALUES (
+        #{advertiserId},
+        #{title},
+        #{creativeUrl},
+        #{categoryCode},
+        #{bid},
+        #{dailyBudget},
+        #{status}
+        )
+    </insert>
+
+    <insert id="batchInsertTargets">
+        INSERT INTO ad_target (
+        ad_id,
+        dim_type,
+        dim_value
+        )
+        VALUES
+        <foreach collection="targets" item="target" separator=",">
+            (
+            #{adId},
+            #{target.dimType},
+            #{target.dimValue}
+            )
+        </foreach>
+    </insert>
+
+    <select id="listTargetsByAdId"
+            resultType="com.rtb.dto.TargetItem">
+        SELECT
+        dim_type,
+        dim_value
+        FROM ad_target
+        WHERE ad_id = #{adId}
+        ORDER BY dim_type, dim_value
+    </select>
+
+
+
+
+    <sql id="adFilter">
+        <where>
+            <if test="q.advertiserId != null">
+                AND advertiser_id = #{q.advertiserId}
+            </if>
+
+            <if test="q.status != null">
+                AND status = #{q.status}
+            </if>
+
+            <if test="q.titleLike != null and q.titleLike != ''">
+                AND title LIKE CONCAT('%', #{q.titleLike}, '%')
+            </if>
+        </where>
+    </sql>
+
+    <select id="countBy" resultType="long">
+        SELECT COUNT(*)
+        FROM ad
+        <include refid="adFilter"/>
+    </select>
+
+    <select id="selectPage" resultType="com.rtb.entity.Ad">
+        SELECT
+        id,
+        advertiser_id,
+        title,
+        creative_url,
+        category_code,
+        bid,
+        daily_budget,
+        status,
+        created_at,
+        updated_at
+        FROM ad
+        <include refid="adFilter"/>
+        ORDER BY id DESC
+        LIMIT #{q.pageSize} OFFSET #{q.offset}
+    </select>
+
+    <update id="updateAd" parameterType="com.rtb.entity.Ad">
+        UPDATE ad
+        SET
+        title = #{title},
+        creative_url = #{creativeUrl},
+        category_code = #{categoryCode},
+        bid = #{bid},
+        daily_budget = #{dailyBudget}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteTargetsByAdId">
+        DELETE FROM ad_target
+        WHERE ad_id = #{adId}
+    </delete>
+
+    <delete id="deleteAd">
+        DELETE FROM ad
+        WHERE id = #{id}
+    </delete>
+
+    <update id="updateStatus">
+        UPDATE ad
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+
+    <select id="findCandidates" resultType="com.rtb.entity.Ad">
+        SELECT DISTINCT
+        a.id,
+        a.advertiser_id,
+        a.title,
+        a.creative_url,
+        a.category_code,
+        a.bid,
+        a.daily_budget,
+        a.status,
+        a.created_at,
+        a.updated_at
+        FROM ad a
+        JOIN ad_target region_target
+        ON region_target.ad_id = a.id
+        AND region_target.dim_type = 1
+        AND region_target.dim_value = #{region}
+
+        <if test="ageBucket != null and ageBucket != ''">
+            JOIN ad_target age_target
+            ON age_target.ad_id = a.id
+            AND age_target.dim_type = 2
+            AND age_target.dim_value = #{ageBucket}
+        </if>
+
+        <if test="gender != null and gender != ''">
+            JOIN ad_target gender_target
+            ON gender_target.ad_id = a.id
+            AND gender_target.dim_type = 3
+            AND gender_target.dim_value = #{gender}
+        </if>
+
+        WHERE a.status = 1
+
+        <if test="categoryCode != null and categoryCode != ''">
+            AND a.category_code = #{categoryCode}
+        </if>
+
+        ORDER BY a.bid DESC, a.id ASC
+    </select>
+
+<!--    当ad的定向条件较少（少于dto的信息，但是其交集是满足条件的），则把该ad列为candidate-->
+    <!--<select id="findCandidates" resultType="com.rtb.entity.Ad">
+        SELECT
+        a.id,
+        a.advertiser_id,
+        a.title,
+        a.creative_url,
+        a.category_code,
+        a.bid,
+        a.daily_budget,
+        a.status,
+        a.created_at,
+        a.updated_at
+        FROM ad a
+        WHERE a.status = 1
+
+        <if test="region != null and region != ''">
+            AND (
+            NOT EXISTS (
+            SELECT 1
+            FROM ad_target t
+            WHERE t.ad_id = a.id
+            AND t.dim_type = 1
+            )
+            OR EXISTS (
+            SELECT 1
+            FROM ad_target t
+            WHERE t.ad_id = a.id
+            AND t.dim_type = 1
+            AND t.dim_value = #{region}
+            )
+            )
+        </if>
+
+        <if test="ageBucket != null and ageBucket != ''">
+            AND (
+            NOT EXISTS (
+            SELECT 1
+            FROM ad_target t
+            WHERE t.ad_id = a.id
+            AND t.dim_type = 2
+            )
+            OR EXISTS (
+            SELECT 1
+            FROM ad_target t
+            WHERE t.ad_id = a.id
+            AND t.dim_type = 2
+            AND t.dim_value = #{ageBucket}
+            )
+            )
+        </if>
+
+        <if test="gender != null and gender != ''">
+            AND (
+            NOT EXISTS (
+            SELECT 1
+            FROM ad_target t
+            WHERE t.ad_id = a.id
+            AND t.dim_type = 3
+            )
+            OR EXISTS (
+            SELECT 1
+            FROM ad_target t
+            WHERE t.ad_id = a.id
+            AND t.dim_type = 3
+            AND t.dim_value = #{gender}
+            )
+            )
+        </if>
+
+        <if test="categoryCode != null and categoryCode != ''">
+            AND a.category_code = #{categoryCode}
+        </if>
+
+        ORDER BY a.bid DESC, a.id ASC
+    </select>-->
+
 </mapper>
