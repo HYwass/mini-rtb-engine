@@ -13,6 +13,7 @@ public class BidRequest {
     private String region;
 
     // 例如 25-30；可不传
+    @Size(max = 64)
     private String ageBucket;
 
     // 可不传；传入值要和 ad_target 中的值一致
@@ -20,5 +21,6 @@ public class BidRequest {
     private String gender;
 
     // 可不传
+    @Size(max = 32)
     private String categoryCode;
 }

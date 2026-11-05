@@ -15,11 +15,21 @@ public class BidService {
 
     private final AdMapper adMapper;
 
+    private final BudgetService budgetService;
+
+    private final BidLogService bidLogService;
+
     private static final BigDecimal MIN_INCREMENT =
             new BigDecimal("0.01");
 
-    public BidService(AdMapper adMapper) {
+    public BidService(
+            AdMapper adMapper,
+            BudgetService budgetService,
+            BidLogService bidLogService) {
+
         this.adMapper = adMapper;
+        this.budgetService = budgetService;
+        this.bidLogService = bidLogService;
     }
 
     public List<Ad> findCandidates(BidRequest req) {
@@ -39,36 +49,50 @@ public class BidService {
         response.setRequestId(UUID.randomUUID().toString());
         response.setCandidateCnt(candidates.size());
 
-        // 没有候选广告
-        if (candidates.isEmpty()) {
-            response.setHasAd(false);
+        for (int i = 0; i < candidates.size(); i++) {
+            Ad candidate = candidates.get(i);
+
+            // 没有下一名时，按自身出价计算
+            BigDecimal payPrice = candidate.getBid();
+
+            if (i + 1 < candidates.size()) {
+                BigDecimal nextBid = candidates.get(i + 1).getBid();
+
+                payPrice = nextBid
+                        .add(MIN_INCREMENT)
+                        .min(candidate.getBid());
+            }
+
+            boolean deducted = budgetService.deduct(
+                    candidate.getId(),
+                    candidate.getDailyBudget(),
+                    payPrice
+            );
+
+            if (!deducted) {
+                // 当前广告余额不足，继续尝试下一名
+                continue;
+            }
+
+            BidResponse.Winner winner = new BidResponse.Winner();
+            winner.setAdId(candidate.getId());
+            winner.setTitle(candidate.getTitle());
+            winner.setCreativeUrl(candidate.getCreativeUrl());
+            winner.setBid(candidate.getBid());
+
+            response.setHasAd(true);
+            response.setWinner(winner);
+            response.setPayPrice(payPrice);
+
+            bidLogService.record(req, response);
+
             return response;
         }
 
-        // SQL 已经按照出价降序排列
-        Ad winnerAd = candidates.get(0);
+        // 没有候选，或者所有候选都没有足够余额
+        response.setHasAd(false);
 
-        // 只有一条候选时，按自身出价计算
-        BigDecimal payPrice = winnerAd.getBid();
-
-        // 至少两条候选时，按第二名出价加一分钱计算
-        if (candidates.size() >= 2) {
-            BigDecimal secondBid = candidates.get(1).getBid();
-
-            payPrice = secondBid
-                    .add(MIN_INCREMENT)
-                    .min(winnerAd.getBid());
-        }
-
-        BidResponse.Winner winner = new BidResponse.Winner();
-        winner.setAdId(winnerAd.getId());
-        winner.setTitle(winnerAd.getTitle());
-        winner.setCreativeUrl(winnerAd.getCreativeUrl());
-        winner.setBid(winnerAd.getBid());
-
-        response.setHasAd(true);
-        response.setWinner(winner);
-        response.setPayPrice(payPrice);
+        bidLogService.record(req, response);
 
         return response;
     }
