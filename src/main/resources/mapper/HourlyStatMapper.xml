@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rtb.mapper.HourlyStatMapper">
+
+    <insert id="accumulate">
+        INSERT INTO bid_stat_hourly (
+        stat_hour,
+        ad_id,
+        win_count,
+        spend
+        )
+        VALUES (
+        #{statHour},
+        #{adId},
+        1,
+        #{amount}
+        )
+        ON DUPLICATE KEY UPDATE
+        win_count = win_count + 1,
+        spend = spend + #{amount}
+    </insert>
+
+    <select id="selectHourly"
+            resultType="com.rtb.dto.HourlyStatResponse">
+        SELECT
+        stat_hour,
+        ad_id,
+        win_count,
+        spend
+        FROM bid_stat_hourly
+        WHERE ad_id = #{q.adId}
+        AND stat_hour >= #{q.startTime}
+        AND stat_hour &lt; #{q.endTime}
+        ORDER BY stat_hour ASC
+    </select>
+
+</mapper>

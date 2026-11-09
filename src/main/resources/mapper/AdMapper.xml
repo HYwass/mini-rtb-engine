@@ -142,7 +142,7 @@
     </update>
 
 
-    <select id="findCandidates" resultType="com.rtb.entity.Ad">
+    <select id="findCandidates" resultType="com.rtb.entity.Ad" timeout="1">
         SELECT DISTINCT
         a.id,
         a.advertiser_id,

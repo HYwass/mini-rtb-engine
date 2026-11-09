@@ -96,6 +96,25 @@ public class BudgetService {
     }
 
 
+    public BigDecimal getSpent(Long adId, LocalDate date) {
+        String key = spentKey(
+                adId,
+                date.format(DATE_FORMAT)
+        );
+
+        String value = redis.opsForValue().get(key);
+
+        if (value == null) {
+            return null;
+        }
+
+        return BigDecimal.valueOf(
+                Long.parseLong(value),
+                2
+        );
+    }
+
+
     private String today() {
         return LocalDate.now(BUSINESS_ZONE).format(DATE_FORMAT);
     }

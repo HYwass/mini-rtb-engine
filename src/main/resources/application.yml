@@ -1,3 +1,7 @@
+rtb:
+  kafka:
+    topic: learning_bid_event
+
 server:
   port: 8081
 
@@ -9,6 +13,9 @@ spring:
     username: root
     password: ""
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 2000
+      validation-timeout: 1000
   data:
     redis:
       host: 127.0.0.1
@@ -16,6 +23,25 @@ spring:
       database: 10
       connect-timeout: 2s
       timeout: 2s
+  kafka:
+    bootstrap-servers: 127.0.0.1:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        max.block.ms: 2000
+
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+
+    listener:
+      ack-mode: record
 
 
 mybatis:

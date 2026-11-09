@@ -11,6 +11,7 @@ public class BidResponse {
 
     private String requestId;
 
+    // 默认值false（后面会直接采用默认值）
     private boolean hasAd;
 
     private int candidateCnt;
@@ -30,4 +31,15 @@ public class BidResponse {
 
         private BigDecimal bid;
     }
+
+    // 默认值false（后面会直接采用默认值）
+    // 当前只有数据库连接失败会标记为降级
+    private boolean degraded;
+
+    /*
+    NO_CANDIDATE	                没有符合条件的候选
+    BUDGET_INSUFFICIENT	            候选都没有足够预算
+    CANDIDATE_LOOKUP_UNAVAILABLE	候选查询因连接或超时问题无法完成
+    */
+    private String reason;
 }

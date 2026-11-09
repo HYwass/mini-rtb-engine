@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.rtb.mapper.BillingMapper">
+
+    <insert id="insertProcessed">
+        INSERT INTO processed_event (
+        event_id,
+        consumer_group
+        )
+        VALUES (
+        #{eventId},
+        #{consumerGroup}
+        )
+    </insert>
+
+    <insert id="insertBilling">
+        INSERT INTO billing_event (
+        event_id,
+        request_id,
+        ad_id,
+        amount,
+        occurred_at
+        )
+        VALUES (
+        #{event.eventId},
+        #{event.requestId},
+        #{event.adId},
+        #{event.payPrice},
+        #{event.occurredAt}
+        )
+    </insert>
+
+    <select id="sumAmount" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0.00)
+        FROM billing_event
+        WHERE ad_id = #{adId}
+        AND occurred_at >= #{startMillis}
+        AND occurred_at &lt; #{endMillis}
+    </select>
+
+</mapper>
